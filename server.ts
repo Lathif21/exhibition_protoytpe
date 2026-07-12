@@ -1,5 +1,7 @@
 import { Elysia } from 'elysia';
 import { db } from './src/db';
+import { initializeDatabase } from './src/db/init';
+import { sessionsRoutes } from './src/routes/sessions';
 import 'dotenv/config';
 
 const app = new Elysia();
@@ -10,6 +12,9 @@ if (!API_KEY) {
   console.error('ERROR: SUMOPOD_API_KEY not set in .env file');
   process.exit(1);
 }
+
+// Initialize database
+await initializeDatabase();
 
 // Serve index.html
 app.get('/', async () => {
@@ -23,6 +28,9 @@ app.get('/', async () => {
 
 // Health check
 app.get('/health', () => ({ status: 'ok' }));
+
+// Sessions routes (Fase 2)
+sessionsRoutes(app);
 
 // AI endpoint — Claude via SumoPod
 app.post('/api/claude', async ({ body }: { body: any }) => {
