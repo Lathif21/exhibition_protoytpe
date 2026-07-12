@@ -148,6 +148,10 @@
     padding:5px 12px;font-size:10.5px;font-family:var(--mono);cursor:pointer}
   .sug button:hover{border-color:var(--pln);color:var(--pln)}
 
+  /* Spinner animation */
+  @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+  .spinner{display:inline-block;width:12px;height:12px;border:2px solid var(--faint);border-top-color:var(--pln);border-radius:50%;animation:spin 0.8s linear infinite;margin-right:6px}
+
   .hide{display:none}
   footer{margin-top:20px;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:space-between;
     font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;color:var(--faint)}
@@ -635,11 +639,23 @@ OPSI B — PLTS + BESS:
 VERDIK MODEL: ${bestName} lebih menguntungkan.
 Asumsi: PSH 4,0 jam/hari, degradasi 0,5%/thn, O&M 1% CAPEX/thn, umur 25 thn, 26 hari kerja/bln, efisiensi baterai 90%.`;
 }
-let aiTimer=null, aiKey="";
+let aiTimer=null, aiKey="", aiTimeout=null;
 async function narrate(){
   const el=document.getElementById('aiTx');
-  el.className="tx think"; el.textContent="▸ menganalisis konfigurasi…";
-  const k=[CFG.pv,CFG.bess,CFG.roof].join('|'); aiKey=k;
+  el.className="tx think";
+  el.innerHTML='<span class="spinner"></span> menganalisis konfigurasi…';
+
+  const k=[CFG.pv,CFG.bess,CFG.roof].join('|');
+  aiKey=k;
+
+  // Timeout indicator (5s)
+  clearTimeout(aiTimeout);
+  aiTimeout=setTimeout(()=>{
+    if(aiKey===k && el.className==='tx think'){
+      el.innerHTML='<span class="spinner"></span> (sedang proses…)';
+    }
+  }, 5000);
+
   const out = await callOpenAI([{role:"user",content: brief()+`
 
 Anda analis investasi energi BEFISIEN. Bicara ke pemilik pabrik, 3-4 kalimat Bahasa Indonesia bisnis:
@@ -649,23 +665,36 @@ Anda analis investasi energi BEFISIEN. Bicara ke pemilik pabrik, 3-4 kalimat Bah
 
 Jujur di atas segalanya. Jangan menjual berlebihan — kredibilitas lebih berharga
 daripada satu penjualan. Tanpa bullet, tanpa sapaan, langsung isi.`}]);
+
+  clearTimeout(aiTimeout);
   if (k!==aiKey) return;
+
   el.className="tx";
-  el.innerHTML = out ? out.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')
-    : "Analis AI tidak merespons. Angka pada tabel tetap akurat.";
+  if(out){
+    el.innerHTML = out.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
+  } else {
+    el.innerHTML = "<b style='color:var(--faint)'>⚠ Analis AI tidak merespons.</b><br>Angka di tabel sudah akurat — gunakan itu sebagai referensi.";
+  }
 }
 function schedule(){ clearTimeout(aiTimer); aiTimer=setTimeout(narrate,700); }
 
 async function ask(q){
   const el=document.getElementById('aiTx');
-  el.className="tx think"; el.textContent="▸ "+q+"\n\nmenghitung…";
+  el.className="tx think";
+  el.innerHTML='<b style="color:var(--ink)">T: '+q+'</b><br><br><span class="spinner"></span> menghitung…';
+
   const out = await callOpenAI([{role:"user",content: brief()+`
 
 Pertanyaan pemilik pabrik: "${q}"
 
 Jawab dalam Bahasa Indonesia bisnis, maks 4 kalimat, berbasis angka di atas. Jujur — jangan menjual berlebihan. Langsung isi.`}]);
+
   el.className="tx";
-  el.innerHTML = out ? "<b>T:</b> "+q+"<br><br>"+out.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>') : "Tidak ada respons. Coba lagi.";
+  if(out){
+    el.innerHTML = "<b style='color:var(--ink)'>T: "+q+"</b><br><br>"+out.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
+  } else {
+    el.innerHTML = "<b style='color:var(--ink)'>T: "+q+"</b><br><br><span style='color:var(--faint)'>⚠ Tidak ada respons. Silakan coba pertanyaan lain.</span>";
+  }
 }
 
 // ================= STAGE 1 FLOW =================

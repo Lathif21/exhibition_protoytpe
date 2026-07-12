@@ -24,7 +24,8 @@ export async function callClaude(messages: any[], model = 'claude-opus-4-8'): Pr
     const data = (await response.json()) as any;
 
     if (!response.ok) {
-      console.error('Claude API error:', data);
+      const errorMsg = data.error?.message || data.message || 'Unknown error';
+      console.error(`[Claude API Error] ${response.status}: ${errorMsg}`);
       return null;
     }
 
@@ -34,9 +35,14 @@ export async function callClaude(messages: any[], model = 'claude-opus-4-8'): Pr
       .join('\n')
       .trim();
 
+    if (!text) {
+      console.warn('[Claude] Empty response from API');
+      return null;
+    }
+
     return text;
   } catch (error: any) {
-    console.error('Claude call error:', error.message);
+    console.error(`[Claude Network Error] ${error.message}`);
     return null;
   }
 }
@@ -59,14 +65,21 @@ export async function callOpenAI(messages: any[], model = 'gpt-4o-mini'): Promis
     const data = (await response.json()) as any;
 
     if (!response.ok) {
-      console.error('OpenAI API error:', data);
+      const errorMsg = data.error?.message || data.message || 'Unknown error';
+      console.error(`[OpenAI API Error] ${response.status}: ${errorMsg}`);
       return null;
     }
 
     const text = data.choices?.[0]?.message?.content || '';
+
+    if (!text) {
+      console.warn('[OpenAI] Empty response from API');
+      return null;
+    }
+
     return text;
   } catch (error: any) {
-    console.error('OpenAI call error:', error.message);
+    console.error(`[OpenAI Network Error] ${error.message}`);
     return null;
   }
 }
