@@ -6,3 +6,5 @@ node_modules/
 npm-debug.log*
 local.db
 bun.lockb
+rekening_listrik_pln.pdf
+single_line_diagram.pdf
