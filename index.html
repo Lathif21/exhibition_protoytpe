@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BEFISIEN // EPP — Sintesis Kapital Energi</title>
+<style>
+  :root{
+    --bg:#05080b; --panel:#0a1015; --panel2:#0d151c; --line:#1a2630; --lsoft:#131e27;
+    --ink:#e6eff4; --dim:#7a91a0; --faint:#475966;
+    --sun:#ffc247; --bat:#3ddc97; --pln:#4d9fff; --red:#ff5c6c; --amber:#ffb454;
+    --mono:"JetBrains Mono","SF Mono",ui-monospace,Menlo,Consolas,monospace;
+    --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;
+    background-image:linear-gradient(var(--lsoft) 1px,transparent 1px),linear-gradient(90deg,var(--lsoft) 1px,transparent 1px);
+    background-size:44px 44px}
+  .wrap{max-width:1380px;margin:0 auto;padding:20px}
+  header{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;margin-bottom:18px;border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:center;gap:13px}
+  .glyph{width:32px;height:32px;transform:rotate(45deg);border:1.5px solid var(--bat);border-radius:6px;position:relative}
+  .glyph::after{content:"";position:absolute;inset:7px;background:var(--pln);border-radius:2px}
+  .brand h1{font-size:19px;letter-spacing:3px;margin:0;font-weight:700}
+  .brand h1 span{color:var(--faint);font-weight:400}
+  .hr{text-align:right;font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--dim)}
+  .hr .b{font-size:12px;color:var(--ink);letter-spacing:1.5px}
+  .hr .n{color:var(--bat)}
+
+  /* stepper */
+  .steps{display:flex;gap:0;margin-bottom:18px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .step{flex:1;padding:11px 16px;font-family:var(--mono);font-size:11px;letter-spacing:1.5px;color:var(--faint);
+    background:var(--panel);border-right:1px solid var(--line);display:flex;align-items:center;gap:9px}
+  .step:last-child{border-right:none}
+  .step .k{width:18px;height:18px;border:1px solid var(--line);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px}
+  .step.on{color:var(--ink);background:var(--panel2)}
+  .step.on .k{border-color:var(--pln);color:var(--pln)}
+  .step.done{color:var(--bat)}
+  .step.done .k{border-color:var(--bat);color:var(--bat);background:rgba(61,220,151,.08)}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .ph{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid var(--line)}
+  .ph .t{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:11.5px;letter-spacing:2px}
+  .ph .t::before{content:"";width:9px;height:9px;background:var(--bat);border-radius:2px}
+  .chip{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;padding:3px 9px;border:1px solid #1e6b4d;color:var(--bat);border-radius:4px}
+  .chip.blue{border-color:#24506e;color:var(--pln)}
+  .chip.grey{border-color:var(--line);color:var(--faint)}
+  .pb{padding:18px}
+
+  /* stage 1: upload */
+  .drops{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:820px){.drops{grid-template-columns:1fr}}
+  .drop{background:var(--panel2);border:1px dashed var(--line);border-radius:8px;padding:22px;text-align:center;cursor:pointer;transition:.15s}
+  .drop:hover{border-color:var(--pln)}
+  .drop.filled{border-style:solid;border-color:var(--bat);background:linear-gradient(160deg,#0b1a14,#08110e);cursor:default}
+  .drop .ic{font-size:26px;margin-bottom:10px;opacity:.6}
+  .drop .nm{font-family:var(--mono);font-size:11.5px;letter-spacing:1.5px;color:var(--ink);margin-bottom:5px}
+  .drop .ds{font-size:11.5px;color:var(--dim);line-height:1.5}
+  .drop.filled .ds{color:var(--bat);font-family:var(--mono);font-size:11px}
+  .go{margin-top:18px;width:100%;padding:14px;background:var(--pln);color:#04121f;border:none;border-radius:7px;
+    font-family:var(--mono);font-size:12.5px;font-weight:700;letter-spacing:2px;cursor:pointer}
+  .go:disabled{background:var(--lsoft);color:var(--faint);cursor:not-allowed}
+
+  /* extraction log */
+  .log{margin-top:16px;background:#060b0f;border:1px solid var(--line);border-radius:7px;padding:14px;
+    font-family:var(--mono);font-size:11px;line-height:1.85;max-height:190px;overflow-y:auto}
+  .log .l{color:var(--dim)}
+  .log .l .ok{color:var(--bat)}
+  .log .l .v{color:var(--ink)}
+  .log .l .w{color:var(--amber)}
+
+  /* main grid */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:1060px){.grid{grid-template-columns:1fr}}
+
+  /* twin */
+  .twin-lg{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;font-family:var(--mono);font-size:10px;letter-spacing:.5px}
+  .twin-lg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;font-style:normal}
+  .clock{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .clock .tm{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--pln)}
+  .clock .ph2{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;padding:3px 9px;border-radius:4px;border:1px solid var(--line);color:var(--dim)}
+  .clock .ph2.wbp{border-color:var(--red);color:var(--red)}
+  .clock .ph2.solar{border-color:var(--sun);color:var(--sun)}
+  .flows{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:12px}
+  .flow{background:var(--panel2);border:1px solid var(--lsoft);border-radius:7px;padding:11px}
+  .flow .fl{font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--dim);text-transform:uppercase}
+  .flow .fv{font-family:var(--mono);font-size:17px;font-weight:700;margin-top:5px}
+  .flow .fs{font-family:var(--mono);font-size:9px;color:var(--faint);margin-top:2px}
+
+  /* toggle */
+  .tog{display:flex;gap:8px;margin-bottom:14px}
+  .tog button{flex:1;padding:10px;background:var(--panel2);border:1px solid var(--line);border-radius:7px;
+    color:var(--dim);font-family:var(--mono);font-size:11px;letter-spacing:1px;cursor:pointer;transition:.15s}
+  .tog button.on{border-color:var(--bat);color:var(--bat);background:rgba(61,220,151,.07)}
+  .tog button.on.pv{border-color:var(--sun);color:var(--sun);background:rgba(255,194,71,.07)}
+
+  /* metrics */
+  .mets{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .met{background:var(--panel2);border:1px solid var(--lsoft);border-radius:8px;padding:15px}
+  .met.hi{background:linear-gradient(160deg,#0c1a15,#091210);border-color:#16412f}
+  .met .l{font-family:var(--mono);font-size:9.5px;letter-spacing:1.2px;color:var(--dim);text-transform:uppercase}
+  .met .v{font-family:var(--mono);font-size:23px;font-weight:700;margin-top:8px;line-height:1.15}
+  .met .v small{font-size:13px;color:var(--dim);font-weight:400}
+  .met.hi .v{color:var(--bat)}
+  .met .s{font-family:var(--mono);font-size:9.5px;color:var(--faint);margin-top:4px}
+
+  /* compare table */
+  .cmp{width:100%;border-collapse:collapse;margin-top:6px;font-family:var(--mono);font-size:11.5px}
+  .cmp th{text-align:right;padding:9px 8px;color:var(--dim);font-size:9.5px;letter-spacing:1px;
+    border-bottom:1px solid var(--line);font-weight:500;text-transform:uppercase}
+  .cmp th:first-child{text-align:left}
+  .cmp td{padding:9px 8px;text-align:right;border-bottom:1px solid var(--lsoft)}
+  .cmp td:first-child{text-align:left;color:var(--dim)}
+  .cmp tr:last-child td{border-bottom:none}
+  .cmp .win{color:var(--bat);font-weight:700}
+  .cmp .hd-pv{color:var(--sun)}
+  .cmp .hd-bess{color:var(--bat)}
+
+  /* sliders */
+  .ctrl{margin-bottom:14px}
+  .ct{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+  .ct .n{font-family:var(--mono);font-size:10.5px;color:var(--ink)}
+  .ct .n em{font-style:normal;color:var(--faint);font-size:9px;margin-left:6px}
+  .ct .v{font-family:var(--mono);font-size:12.5px;color:var(--pln);font-weight:700}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;background:var(--line);outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:4px;background:var(--ink);
+    border:2px solid var(--pln);cursor:pointer;box-shadow:0 0 9px rgba(77,159,255,.5)}
+  input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:4px;background:var(--ink);border:2px solid var(--pln);cursor:pointer}
+
+  /* AI */
+  .ai{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:16px;min-height:150px}
+  .ai .bd{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;color:var(--bat);margin-bottom:12px}
+  .ai .bd .d{width:6px;height:6px;border-radius:50%;background:var(--bat);box-shadow:0 0 8px var(--bat);animation:p 1.6s infinite}
+  @keyframes p{0%,100%{opacity:1}50%{opacity:.25}}
+  .ai .tx{font-size:13.5px;line-height:1.7}
+  .ai .tx.think{color:var(--dim);font-family:var(--mono);font-size:11.5px}
+  .ai .tx b{color:var(--bat)}
+  .verdict{padding:12px 14px;border-radius:7px;margin-bottom:14px;font-family:var(--mono);font-size:12px;letter-spacing:.5px;
+    border:1px solid #16412f;background:rgba(61,220,151,.06);color:var(--bat)}
+  .verdict.pv{border-color:#5c4415;background:rgba(255,194,71,.06);color:var(--sun)}
+  .qa{margin-top:14px;display:flex;gap:9px}
+  .qa input{flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:10px 12px;color:var(--ink);font-size:12.5px}
+  .qa input:focus{outline:none;border-color:var(--pln)}
+  .qa button{background:var(--pln);color:#04121f;border:none;border-radius:6px;padding:0 16px;
+    font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer}
+  .sug{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+  .sug button{background:transparent;border:1px solid var(--line);color:var(--dim);border-radius:20px;
+    padding:5px 12px;font-size:10.5px;font-family:var(--mono);cursor:pointer}
+  .sug button:hover{border-color:var(--pln);color:var(--pln)}
+
+  .hide{display:none}
+  footer{margin-top:20px;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:space-between;
+    font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;color:var(--faint)}
+  footer .q{max-width:58%}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><div class="glyph"></div><h1>BEFISIEN <span>// EPP</span></h1></div>
+    <div class="hr">
+      <div class="n">● SBY-HQ-01</div>
+      <div class="b">SINTESIS KAPITAL ENERGI</div>
+      <div>PLTS + BESS · DIGITAL TWIN</div>
+    </div>
+  </header>
+
+  <div class="steps">
+    <div class="step on" id="st1"><span class="k">1</span> BACA DOKUMEN</div>
+    <div class="step" id="st2"><span class="k">2</span> DIGITAL TWIN</div>
+    <div class="step" id="st3"><span class="k">3</span> KEPUTUSAN INVESTASI</div>
+  </div>
+
+  <!-- ============ STAGE 1 ============ -->
+  <div class="panel" id="stage1">
+    <div class="ph"><div class="t">AKUISISI DATA PELANGGAN</div><div class="chip grey" id="c1">MENUNGGU INPUT</div></div>
+    <div class="pb">
+      <div class="drops">
+        <div class="drop" id="dBill">
+          <div class="ic">▤</div>
+          <div class="nm">REKENING LISTRIK PLN</div>
+          <div class="ds">Tagihan bulanan — pemakaian kWh, split WBP/LWBP, biaya beban kVA</div>
+        </div>
+        <div class="drop" id="dSld">
+          <div class="ic">⌗</div>
+          <div class="nm">SINGLE LINE DIAGRAM</div>
+          <div class="ds">Topologi kelistrikan — kapasitas trafo, beban terpasang, titik sambung</div>
+        </div>
+      </div>
+      <button class="go" id="btnRead" disabled>BACA & EKSTRAK DOKUMEN</button>
+      <div class="log hide" id="log"></div>
+    </div>
+  </div>
+
+  <!-- ============ STAGE 2+3 ============ -->
+  <div class="grid hide" id="stage2">
+    <!-- LEFT: TWIN -->
+    <div class="panel">
+      <div class="ph"><div class="t">DIGITAL TWIN — PROFIL BEBAN 24 JAM</div><div class="chip blue" id="cTwin">SIMULASI AKTIF</div></div>
+      <div class="pb">
+        <div class="tog">
+          <button id="tBase" class="on">BASELINE (PLN)</button>
+          <button id="tPv" class="pv">+ PLTS</button>
+          <button id="tBess">+ PLTS &amp; BESS</button>
+        </div>
+
+        <div class="clock">
+          <div class="tm" id="clk">00:00</div>
+          <div class="ph2" id="phase">BEBAN DASAR · SHIFT-3</div>
+        </div>
+
+        <svg id="chart" viewBox="0 0 620 240" style="width:100%;height:auto;display:block"></svg>
+
+        <div class="twin-lg">
+          <span><i style="background:var(--pln)"></i>PLN</span>
+          <span><i style="background:var(--sun)"></i>SURYA</span>
+          <span><i style="background:var(--bat)"></i>BATERAI</span>
+          <span><i style="background:#6b7d8a"></i>BEBAN PABRIK</span>
+          <span style="color:var(--red)"><i style="background:rgba(255,92,108,.25);border:1px solid var(--red)"></i>WBP 18-22</span>
+        </div>
+
+        <div class="flows">
+          <div class="flow"><div class="fl">Beban Pabrik</div><div class="fv" id="fLoad" style="color:#9fb2bf">0 kW</div><div class="fs">kebutuhan</div></div>
+          <div class="flow"><div class="fl">Dari PLN</div><div class="fv" id="fPln" style="color:var(--pln)">0 kW</div><div class="fs" id="fPlnS">grid draw</div></div>
+          <div class="flow"><div class="fl">Dari Surya</div><div class="fv" id="fPv" style="color:var(--sun)">0 kW</div><div class="fs">generasi</div></div>
+          <div class="flow"><div class="fl">Baterai</div><div class="fv" id="fBat" style="color:var(--bat)">—</div><div class="fs" id="fBatS">idle</div></div>
+        </div>
+
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--lsoft)">
+          <div style="font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--dim);margin-bottom:12px">▸ PARAMETER SISTEM</div>
+          <div class="ctrl">
+            <div class="ct"><span class="n">Kapasitas PLTS <em>dibatasi atap 8.400 m²</em></span><span class="v"><span id="vPv">750</span> kWp</span></div>
+            <input type="range" id="sPv" min="100" max="1100" value="750" step="25">
+          </div>
+          <div class="ctrl">
+            <div class="ct"><span class="n">Kapasitas BESS <em>untuk geser beban WBP</em></span><span class="v"><span id="vBess">1.500</span> kWh</span></div>
+            <input type="range" id="sBess" min="0" max="3000" value="1500" step="100">
+          </div>
+          <div class="ctrl">
+            <div class="ct"><span class="n">Luas Atap Terpakai <em>estimasi AI, dapat dikoreksi</em></span><span class="v"><span id="vRoof">6.000</span> m²</span></div>
+            <input type="range" id="sRoof" min="1000" max="8400" value="6000" step="200">
+          </div>
+          <div class="ctrl">
+            <div class="ct"><span class="n">Harga BESS <em>penentu kelayakan baterai</em></span><span class="v">Rp <span id="vBcost">3,8</span> jt/kWh</span></div>
+            <input type="range" id="sBcost" min="1.0" max="4.5" value="3.8" step="0.1">
+            <div id="beNote" style="font-family:var(--mono);font-size:9.5px;color:var(--faint);margin-top:6px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: DECISION -->
+    <div class="panel">
+      <div class="ph"><div class="t">KEPUTUSAN INVESTASI</div><div class="chip blue">CLAUDE · LIVE</div></div>
+      <div class="pb">
+        <div class="verdict" id="verdict">Menghitung skenario…</div>
+
+        <table class="cmp">
+          <tr>
+            <th>Metrik</th>
+            <th class="hd-pv">PLTS SAJA</th>
+            <th class="hd-bess">PLTS + BESS</th>
+          </tr>
+          <tr><td>Investasi (CAPEX)</td><td id="xCapA">—</td><td id="xCapB">—</td></tr>
+          <tr><td>Hemat tagihan / thn</td><td id="xSavA">—</td><td id="xSavB">—</td></tr>
+          <tr><td>Potong biaya beban kVA</td><td id="xKvaA">—</td><td id="xKvaB">—</td></tr>
+          <tr><td>Payback</td><td id="xPbA">—</td><td id="xPbB">—</td></tr>
+          <tr><td>IRR (25 thn)</td><td id="xIrrA">—</td><td id="xIrrB">—</td></tr>
+          <tr><td>Laba bersih 25 thn</td><td id="xNpA">—</td><td id="xNpB">—</td></tr>
+        </table>
+
+        <div class="mets" style="margin-top:16px">
+          <div class="met hi">
+            <div class="l">Total Profit 25 Tahun</div>
+            <div class="v" id="mProfit">—</div>
+            <div class="s" id="mProfitS">opsi rekomendasi</div>
+          </div>
+          <div class="met hi">
+            <div class="l">Reduksi Karbon / Thn</div>
+            <div class="v" id="mCo2">—</div>
+            <div class="s">faktor emisi grid Jawa-Bali</div>
+          </div>
+        </div>
+
+        <div class="ai" style="margin-top:16px">
+          <div class="bd"><span class="d"></span> ANALIS AI · REKOMENDASI</div>
+          <div class="tx think" id="aiTx">menunggu data…</div>
+        </div>
+
+        <div class="qa">
+          <input type="text" id="qIn" placeholder="mis: kenapa perlu baterai? bukannya solar saja cukup?">
+          <button id="qBtn">TANYA</button>
+        </div>
+        <div class="sug" id="sug"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="q">"PERANGKAT LUNAK BUKANLAH FASILITAS MEWAH. IA ADALAH ARSITEKTUR FUNDAMENTAL PENYANGGA EKSISTENSI INSTITUSI ANDA."</div>
+    <div>TARIF PLN Q3-2026 · I-3/TM · DEMO PAMERAN</div>
+  </footer>
+</div>
+
+<script>
+// ================= EXTRACTED PLANT DATA (from the two documents) =================
+const PLANT = {
+  name:"PT Surya Manufaktur Nusantara",
+  tariff:"I-3 / TM", lwbp:1122, wbp:1683,
+  kvaCharge:40000,            // Rp per kVA per month (biaya beban)
+  kwhLwbp:245650, kwhWbp:61450, kwhTotal:307100,
+  billMonth:441498840,
+  kvaMax:1240, trafoKva:1600,
+  installedKw:1110, peakKw:1153, nightBaseKw:380,
+  roofM2:8400, shifts:3,
+  wbpStart:18, wbpEnd:22
+};
+// 24h load profile for a 3-shift plant (kW) — derived from bill + SLD
+const LOAD = [380,380,380,390,400,430,620,880,1050,1120,1150,1140,
+              900,1080,1140,1150,1130,1050,980,950,930,900,600,420];
+
+const CFG = {
+  pv:750, bess:1500, roof:6000,
+  pvCostPerKwp:9.5e6,        // Rp/kWp installed
+  bessCostPerKwh:3.8e6,      // Rp/kWh installed
+  psh:4.0, degrad:0.005, omPct:0.01, life:25,
+  m2PerKwp:8, co2PerKwh:0.79, bessEff:0.90, bessDod:0.90,
+  workDays:26
+};
+let MODE = "base";  // base | pv | bess
+let hour = 0, twinTimer=null;
+
+// ================= SOLAR CURVE =================
+function pvAt(h, kwp){
+  // bell curve 06:00-18:00, peak ~12:00
+  if (h < 6 || h > 18) return 0;
+  const x = (h - 12) / 3.4;
+  const f = Math.exp(-0.5*x*x);
+  return kwp * f * 0.82;   // derate
+}
+function pvDaily(kwp){ let s=0; for(let h=0;h<24;h++) s += pvAt(h,kwp); return s; }
+
+// ================= DISPATCH SIM (one day) =================
+// Strategy: free solar surplus first, then top up from CHEAP LWBP grid in the
+// overnight trough (00-05, plant only at 380 kW). Discharge during WBP (18-22)
+// to dodge the Rp1.683 peak tariff. Charging is capped so it never creates a
+// NEW kVA peak — otherwise the battery would destroy the demand-charge saving.
+function simulate(kwp, bessKwh){
+  const usableBess = bessKwh * CFG.bessDod;
+  let soc = 0;
+  const out = [];
+  const cRate = bessKwh * 0.5;
+  let targetPeak = 0;
+  for (let h=0; h<24; h++) targetPeak = Math.max(targetPeak, LOAD[h]-pvAt(h,kwp));
+
+  for (let h=0; h<24; h++){
+    const load = LOAD[h];
+    const pv = pvAt(h, kwp);
+    const fromPv = Math.min(pv, load);
+    const surplus = pv - fromPv;
+    let charge=0, gridCharge=0, discharge=0;
+    const isWbp = h >= PLANT.wbpStart && h < PLANT.wbpEnd;
+
+    if (bessKwh > 0){
+      if (!isWbp){
+        if (surplus > 0 && soc < usableBess){
+          charge = Math.min(surplus, (usableBess-soc)/CFG.bessEff, cRate);
+          soc += charge * CFG.bessEff;
+        }
+        if (soc < usableBess && h >= 0 && h < 5){
+          const headroom = Math.max(0, targetPeak - load);
+          const room = Math.min(cRate - charge, headroom);
+          gridCharge = Math.max(0, Math.min(room, (usableBess-soc)/CFG.bessEff));
+          soc += gridCharge * CFG.bessEff;
+        }
+      } else if (soc > 0){
+        discharge = Math.min(load - fromPv, soc, cRate);
+        soc -= discharge;
+      }
+    }
+    const grid = Math.max(0, load - fromPv - discharge) + gridCharge;
+    out.push({h, load, pv, fromPv, charge:charge+gridCharge, gridCharge, discharge, grid, soc});
+  }
+  return out;
+}
+
+// ================= FINANCIALS =================
+function fmtRp(n){
+  const a = Math.abs(n);
+  if (a >= 1e12) return (n/1e12).toFixed(2).replace('.',',')+" T";
+  if (a >= 1e9)  return (n/1e9).toFixed(2).replace('.',',')+" M";
+  if (a >= 1e6)  return Math.round(n/1e6).toLocaleString('id-ID')+" Jt";
+  return Math.round(n).toLocaleString('id-ID');
+}
+function irr(capex, annual, years){
+  // bisection on NPV
+  let lo=-0.5, hi=1.0;
+  const npv = r => { let v=-capex; for(let y=1;y<=years;y++) v += annual*Math.pow(1-CFG.degrad,y-1)/Math.pow(1+r,y); return v; };
+  if (npv(lo) < 0) return null;
+  for (let i=0;i<80;i++){ const m=(lo+hi)/2; if (npv(m)>0) lo=m; else hi=m; }
+  return (lo+hi)/2;
+}
+function economics(kwp, bessKwh){
+  const day = simulate(kwp, bessKwh);
+  let lwbpOffset=0, wbpOffset=0, gridCharged=0;
+  day.forEach(d=>{
+    const isWbp = d.h >= PLANT.wbpStart && d.h < PLANT.wbpEnd;
+    const offset = d.fromPv + d.discharge;   // kWh not bought from PLN this hour
+    if (isWbp) wbpOffset += offset; else lwbpOffset += offset;
+    gridCharged += d.gridCharge;
+  });
+  const daysY = CFG.workDays * 12;
+  // gross avoided cost MINUS the cheap LWBP energy we bought to fill the battery
+  const gross = lwbpOffset*PLANT.lwbp + wbpOffset*PLANT.wbp;
+  const chargeCost = gridCharged * PLANT.lwbp;
+  const saveEnergy = (gross - chargeCost) * daysY;
+
+  // demand charge reduction: new peak kVA
+  const peakGrid = Math.max(...day.map(d=>d.grid));
+  const newKva = peakGrid / 0.93;
+  const kvaSaved = Math.max(0, PLANT.kvaMax - newKva);
+  const saveKva = kvaSaved * PLANT.kvaCharge * 12;
+
+  const capex = kwp*CFG.pvCostPerKwp + bessKwh*CFG.bessCostPerKwh;
+  const om = capex * CFG.omPct;
+  const annual = saveEnergy + saveKva - om;
+
+  // payback with degradation
+  let cum=0, pb=null;
+  for (let y=1;y<=CFG.life;y++){
+    const net = (saveEnergy+saveKva)*Math.pow(1-CFG.degrad,y-1) - om;
+    const prev = cum; cum += net;
+    if (pb===null && cum >= capex) pb = (y-1) + (capex-prev)/net;
+  }
+  let total=0;
+  for (let y=1;y<=CFG.life;y++) total += (saveEnergy+saveKva)*Math.pow(1-CFG.degrad,y-1) - om;
+  const net25 = total - capex;
+  const r = irr(capex, saveEnergy+saveKva-om, CFG.life);
+
+  const co2 = (lwbpOffset+wbpOffset) * daysY * CFG.co2PerKwh / 1000; // ton
+  return {capex, saveEnergy, saveKva, kvaSaved, annual, payback:pb, net25, irr:r, co2, day, peakGrid};
+}
+
+// ================= CHART =================
+function drawChart(){
+  const svg = document.getElementById('chart');
+  const W=620,H=240,P={l:38,r:10,t:12,b:24};
+  const iw=W-P.l-P.r, ih=H-P.t-P.b;
+  const kwp = MODE==="base" ? 0 : CFG.pv;
+  const bess = MODE==="bess" ? CFG.bess : 0;
+  const day = simulate(kwp, bess);
+  const maxY = 1300;
+  const X = h => P.l + (h/23)*iw;
+  const Y = v => P.t + ih - (v/maxY)*ih;
+
+  let s = "";
+  // WBP band
+  s += `<rect x="${X(18)}" y="${P.t}" width="${X(22)-X(18)}" height="${ih}" fill="rgba(255,92,108,.07)" stroke="rgba(255,92,108,.3)" stroke-width="1" stroke-dasharray="3 2"/>`;
+  s += `<text x="${(X(18)+X(22))/2}" y="${P.t+11}" fill="#ff5c6c" font-size="8" font-family="monospace" text-anchor="middle" letter-spacing="1">WBP</text>`;
+  // gridlines
+  for (let v=0; v<=1200; v+=400){
+    s += `<line x1="${P.l}" y1="${Y(v)}" x2="${W-P.r}" y2="${Y(v)}" stroke="#131e27" stroke-width="1"/>`;
+    s += `<text x="${P.l-6}" y="${Y(v)+3}" fill="#475966" font-size="8" font-family="monospace" text-anchor="end">${v}</text>`;
+  }
+  // stacked areas: grid (bottom) + pv + battery
+  const stack = (key, col, op) => {
+    let up = `M ${X(0)} ${Y(0)}`, prev=[];
+    let pts=[], base=[];
+    day.forEach(d=>{
+      let below=0;
+      if (key==="grid") below=0;
+      if (key==="pv")   below=d.grid;
+      if (key==="bat")  below=d.grid + d.fromPv;
+      const val = key==="grid"? d.grid : key==="pv"? d.fromPv : d.discharge;
+      pts.push([X(d.h), Y(below+val)]);
+      base.push([X(d.h), Y(below)]);
+    });
+    let p = "M " + pts.map(q=>q[0].toFixed(1)+" "+q[1].toFixed(1)).join(" L ");
+    p += " L " + base.reverse().map(q=>q[0].toFixed(1)+" "+q[1].toFixed(1)).join(" L ") + " Z";
+    return `<path d="${p}" fill="${col}" opacity="${op}"/>`;
+  };
+  s += stack("grid","#4d9fff",.5);
+  if (kwp>0) s += stack("pv","#ffc247",.55);
+  if (bess>0) s += stack("bat","#3ddc97",.6);
+
+  // load line
+  let lp = "M " + day.map(d=>`${X(d.h).toFixed(1)} ${Y(d.load).toFixed(1)}`).join(" L ");
+  s += `<path d="${lp}" fill="none" stroke="#9fb2bf" stroke-width="1.8" stroke-linejoin="round"/>`;
+
+  // playhead
+  s += `<line x1="${X(hour)}" y1="${P.t}" x2="${X(hour)}" y2="${P.t+ih}" stroke="#e6eff4" stroke-width="1" opacity=".55"/>`;
+  s += `<circle cx="${X(hour)}" cy="${Y(day[hour].load)}" r="3.5" fill="#e6eff4"/>`;
+
+  // x labels
+  [0,6,12,18,23].forEach(h=>{
+    s += `<text x="${X(h)}" y="${H-8}" fill="#475966" font-size="8" font-family="monospace" text-anchor="middle">${String(h).padStart(2,'0')}:00</text>`;
+  });
+  svg.innerHTML = s;
+
+  // flow readouts
+  const d = day[hour];
+  document.getElementById('clk').textContent = String(hour).padStart(2,'0')+":00";
+  const ph = document.getElementById('phase');
+  const isWbp = hour>=18 && hour<22;
+  if (isWbp){ ph.className="ph2 wbp"; ph.textContent="WBP · TARIF Rp 1.683"; }
+  else if (d.pv>0){ ph.className="ph2 solar"; ph.textContent="SURYA AKTIF · LWBP"; }
+  else { ph.className="ph2"; ph.textContent = hour<6||hour>=22 ? "BEBAN DASAR · SHIFT-3" : "LWBP · Rp 1.122"; }
+
+  document.getElementById('fLoad').textContent = Math.round(d.load)+" kW";
+  document.getElementById('fPln').textContent  = Math.round(d.grid)+" kW";
+  document.getElementById('fPlnS').textContent = isWbp ? "tarif puncak!" : "grid draw";
+  document.getElementById('fPv').textContent   = Math.round(d.fromPv)+" kW";
+  const fb = document.getElementById('fBat'), fbs=document.getElementById('fBatS');
+  if (bess===0){ fb.textContent="—"; fbs.textContent="tidak terpasang"; }
+  else if (d.charge>0.5){ fb.textContent="+"+Math.round(d.charge)+" kW"; fbs.textContent="mengisi ("+Math.round(d.soc)+" kWh)"; }
+  else if (d.discharge>0.5){ fb.textContent="−"+Math.round(d.discharge)+" kW"; fbs.textContent="melepas ke beban"; }
+  else { fb.textContent="0 kW"; fbs.textContent="siaga ("+Math.round(d.soc)+" kWh)"; }
+}
+
+// ---- breakeven: at what Rp/kWh does BESS start to beat PV-only? ----
+function bessBreakeven(){
+  const save = CFG.bessCostPerKwh;
+  const A = economics(CFG.pv, 0);
+  // cheaper battery = better. Find highest price where BESS still wins.
+  let lo=0.2e6, hi=6e6;
+  const wins = p => { CFG.bessCostPerKwh=p; return economics(CFG.pv,CFG.bess).net25 > A.net25; };
+  if (!wins(lo)){ CFG.bessCostPerKwh=save; return null; }   // never viable
+  for (let i=0;i<45;i++){ const m=(lo+hi)/2; if (wins(m)) lo=m; else hi=m; }
+  CFG.bessCostPerKwh = save;
+  return lo;
+}
+
+// ================= RENDER DECISION =================
+function renderDecision(){
+  const A = economics(CFG.pv, 0);          // PV only
+  const B = economics(CFG.pv, CFG.bess);   // PV + BESS
+  const set=(id,v)=>document.getElementById(id).textContent=v;
+
+  set('xCapA',"Rp "+fmtRp(A.capex));  set('xCapB',"Rp "+fmtRp(B.capex));
+  set('xSavA',"Rp "+fmtRp(A.saveEnergy)); set('xSavB',"Rp "+fmtRp(B.saveEnergy));
+  set('xKvaA',A.kvaSaved>1? "Rp "+fmtRp(A.saveKva) : "—");
+  set('xKvaB',B.kvaSaved>1? "Rp "+fmtRp(B.saveKva) : "—");
+  set('xPbA', A.payback? A.payback.toFixed(1).replace('.',',')+" thn":">25 thn");
+  set('xPbB', B.payback? B.payback.toFixed(1).replace('.',',')+" thn":">25 thn");
+  set('xIrrA',A.irr? (A.irr*100).toFixed(1).replace('.',',')+"%":"—");
+  set('xIrrB',B.irr? (B.irr*100).toFixed(1).replace('.',',')+"%":"—");
+  set('xNpA',"Rp "+fmtRp(A.net25)); set('xNpB',"Rp "+fmtRp(B.net25));
+
+  // honest winner: BESS must actually pay back AND beat PV-only on 25y profit
+  const bessWorth = B.payback && B.payback < CFG.life && B.net25 > A.net25;
+  const best = bessWorth ? B : A;
+  const bestName = bessWorth ? "PLTS + BESS" : "PLTS SAJA";
+
+  // highlight winner column
+  ['xCapB','xSavB','xKvaB','xPbB','xIrrB','xNpB'].forEach(i=>document.getElementById(i).className = bessWorth?'win':'');
+  ['xCapA','xSavA','xKvaA','xPbA','xIrrA','xNpA'].forEach(i=>document.getElementById(i).className = bessWorth?'':'win');
+
+  const v = document.getElementById('verdict');
+  const be = bessBreakeven();
+  const beTxt = be ? "Rp "+(be/1e6).toFixed(1).replace('.',',')+" jt/kWh" : "—";
+  if (bessWorth){
+    v.className="verdict";
+    v.innerHTML = `▸ REKOMENDASI: <b>PLTS ${CFG.pv} kWp + BESS ${CFG.bess.toLocaleString('id-ID')} kWh</b><br>
+      Baterai menambah laba <b>Rp ${fmtRp(B.net25-A.net25)}</b> selama 25 tahun · payback ${B.payback.toFixed(1).replace('.',',')} thn.`;
+  } else {
+    v.className="verdict pv";
+    v.innerHTML = `▸ REKOMENDASI: <b>PLTS ${CFG.pv} kWp SAJA — belum perlu baterai</b><br>
+      Pada harga sekarang baterai belum menutup biayanya (rugi Rp ${fmtRp(A.net25-B.net25)} vs solar saja).
+      <span style="color:var(--dim)">Baterai menjadi layak di bawah <b style="color:var(--sun)">${beTxt}</b>.</span>`;
+  }
+  const bn = document.getElementById('beNote');
+  if (bn) bn.innerHTML = be
+    ? `titik impas baterai: <span style="color:var(--sun)">Rp ${(be/1e6).toFixed(1).replace('.',',')} jt/kWh</span> — di bawah ini, BESS menang`
+    : `pada konfigurasi ini baterai tidak layak di harga berapa pun`;
+  set('mProfit',"Rp "+fmtRp(best.net25));
+  set('mProfitS',"opsi: "+bestName);
+  set('mCo2',Math.round(best.co2).toLocaleString('id-ID')+" ton");
+
+  return {A,B,bessWorth,bestName};
+}
+
+// ================= AI =================
+async function callClaude(messages, retry=1){
+  try{
+    const res = await fetch("http://localhost:3000/api/claude",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        messages,
+        model: "claude-opus-4-8"
+      })
+    });
+    const d = await res.json();
+    return d.text || null;
+  }catch(e){
+    if(retry>0) return callClaude(messages,retry-1);
+    return null;
+  }
+}
+function brief(){
+  const {A,B,bessWorth,bestName} = renderDecision();
+  const be = bessBreakeven();
+  return `KLIEN: ${PLANT.name} (pabrik manufaktur, 3 shift / 24 jam, Surabaya)
+
+DATA DARI REKENING PLN (Juni 2026):
+- Golongan I-3/TM, daya 1.385 kVA, tarif LWBP Rp 1.122/kWh, WBP Rp 1.683/kWh
+- Pemakaian: LWBP 245.650 kWh + WBP 61.450 kWh = 307.100 kWh/bulan
+- Tagihan: Rp 441,5 juta/bulan. Biaya beban kVA: Rp 49,6 juta/bulan (kVA max 1.240)
+- Jam WBP: 18.00-22.00 (tarif 50% lebih mahal)
+
+DATA DARI SINGLE LINE DIAGRAM:
+- Trafo 1.600 kVA, beban terpasang 1.110 kW, beban puncak 1.153 kW
+- Beban dasar malam (shift-3): 380 kW konstan — pabrik tetap jalan saat gelap
+- Luas atap: 8.400 m2, tersedia 2 feeder cadangan di MDP
+
+KONFIGURASI YANG SEDANG DISIMULASIKAN:
+- PLTS: ${CFG.pv} kWp | BESS: ${CFG.bess} kWh | atap terpakai: ${CFG.roof} m2
+- Harga BESS saat ini: Rp ${(CFG.bessCostPerKwh/1e6).toFixed(1)} jt/kWh
+- TITIK IMPAS BESS: ${be ? "Rp "+(be/1e6).toFixed(1)+" jt/kWh" : "tidak layak di harga berapa pun"}
+  (di bawah harga ini baterai mulai menguntungkan dibanding beli solar saja)
+
+STRATEGI BATERAI YANG DIMODELKAN: isi dari surplus surya + grid LWBP murah pada
+dini hari (00-05, pabrik hanya 380 kW), lalu lepas saat WBP 18-22 untuk menghindari
+tarif Rp 1.683. Pengisian dibatasi agar tidak menciptakan puncak kVA baru.
+Spread arbitrase: Rp 561/kWh (1.683 - 1.122), dikurangi rugi efisiensi 10%.
+
+HASIL EKONOMI:
+OPSI A — PLTS SAJA:
+  CAPEX Rp ${(A.capex/1e9).toFixed(2)} M | hemat energi Rp ${(A.saveEnergy/1e6).toFixed(0)} jt/thn | potong biaya beban Rp ${(A.saveKva/1e6).toFixed(0)} jt/thn
+  Payback ${A.payback?A.payback.toFixed(1):'>25'} thn | IRR ${A.irr?(A.irr*100).toFixed(1):'-'}% | laba 25 thn Rp ${(A.net25/1e9).toFixed(2)} M
+OPSI B — PLTS + BESS:
+  CAPEX Rp ${(B.capex/1e9).toFixed(2)} M | hemat energi Rp ${(B.saveEnergy/1e6).toFixed(0)} jt/thn | potong biaya beban Rp ${(B.saveKva/1e6).toFixed(0)} jt/thn
+  Payback ${B.payback?B.payback.toFixed(1):'>25'} thn | IRR ${B.irr?(B.irr*100).toFixed(1):'-'}% | laba 25 thn Rp ${(B.net25/1e9).toFixed(2)} M
+
+VERDIK MODEL: ${bestName} lebih menguntungkan.
+Asumsi: PSH 4,0 jam/hari, degradasi 0,5%/thn, O&M 1% CAPEX/thn, umur 25 thn, 26 hari kerja/bln, efisiensi baterai 90%.`;
+}
+let aiTimer=null, aiKey="";
+async function narrate(){
+  const el=document.getElementById('aiTx');
+  el.className="tx think"; el.textContent="▸ menganalisis konfigurasi…";
+  const k=[CFG.pv,CFG.bess,CFG.roof].join('|'); aiKey=k;
+  const out = await callClaude([{role:"user",content: brief()+`
+
+Anda analis investasi energi BEFISIEN. Bicara ke pemilik pabrik, 3-4 kalimat Bahasa Indonesia bisnis:
+(1) opsi mana yang menang dan KENAPA — kaitkan ke fakta konkret dokumennya (beban malam 380 kW, WBP 18-22 mahal, biaya beban kVA Rp 49,6 jt/bln);
+(2) sebut payback dan laba 25 tahun;
+(3) jika baterai BELUM layak, katakan terus terang jangan beli dulu — lalu sebut TITIK IMPAS-nya, yaitu di harga berapa baterai mulai masuk akal. Itu informasi berguna, bukan penolakan.
+
+Jujur di atas segalanya. Jangan menjual berlebihan — kredibilitas lebih berharga
+daripada satu penjualan. Tanpa bullet, tanpa sapaan, langsung isi.`}]);
+  if (k!==aiKey) return;
+  el.className="tx";
+  el.innerHTML = out ? out.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')
+    : "Analis AI tidak merespons. Angka pada tabel tetap akurat.";
+}
+function schedule(){ clearTimeout(aiTimer); aiTimer=setTimeout(narrate,700); }
+
+async function ask(q){
+  const el=document.getElementById('aiTx');
+  el.className="tx think"; el.textContent="▸ "+q+"\n\nmenghitung…";
+  const out = await callClaude([{role:"user",content: brief()+`
+
+Pertanyaan pemilik pabrik: "${q}"
+
+Jawab dalam Bahasa Indonesia bisnis, maks 4 kalimat, berbasis angka di atas. Jujur — jangan menjual berlebihan. Langsung isi.`}]);
+  el.className="tx";
+  el.innerHTML = out ? "<b>T:</b> "+q+"<br><br>"+out.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>') : "Tidak ada respons. Coba lagi.";
+}
+
+// ================= STAGE 1 FLOW =================
+let hasBill=false, hasSld=false;
+function checkReady(){
+  document.getElementById('btnRead').disabled = !(hasBill && hasSld);
+}
+document.getElementById('dBill').onclick = function(){
+  if(hasBill) return;
+  hasBill=true; this.classList.add('filled');
+  this.querySelector('.ic').textContent="✓";
+  this.querySelector('.ds').textContent="rekening_listrik_pln.pdf · 1 hal";
+  document.getElementById('c1').textContent="1 / 2 DOKUMEN";
+  checkReady();
+};
+document.getElementById('dSld').onclick = function(){
+  if(hasSld) return;
+  hasSld=true; this.classList.add('filled');
+  this.querySelector('.ic').textContent="✓";
+  this.querySelector('.ds').textContent="single_line_diagram.pdf · 1 hal";
+  document.getElementById('c1').textContent="2 / 2 DOKUMEN";
+  checkReady();
+};
+
+const LOGLINES = [
+  ["▸ Membuka rekening_listrik_pln.pdf …",300],
+  ["  <span class='ok'>✓</span> Golongan tarif  : <span class='v'>I-3 / TM (Industri Menengah)</span>",420],
+  ["  <span class='ok'>✓</span> Pemakaian LWBP  : <span class='v'>245.650 kWh @ Rp 1.122</span>",380],
+  ["  <span class='ok'>✓</span> Pemakaian WBP   : <span class='v'>61.450 kWh @ Rp 1.683</span> <span class='w'>← tarif puncak</span>",420],
+  ["  <span class='ok'>✓</span> Biaya beban kVA : <span class='v'>Rp 49.600.000 / bln (1.240 kVA)</span>",380],
+  ["  <span class='ok'>✓</span> Total tagihan   : <span class='v'>Rp 441.498.840 / bln</span>",400],
+  ["▸ Membuka single_line_diagram.pdf …",420],
+  ["  <span class='ok'>✓</span> Trafo utama     : <span class='v'>1.600 kVA — 20kV/400V</span>",380],
+  ["  <span class='ok'>✓</span> Beban terpasang : <span class='v'>1.110 kW (5 feeder)</span>",380],
+  ["  <span class='ok'>✓</span> Beban dasar mlm : <span class='v'>380 kW konstan</span> <span class='w'>← operasi 3 shift</span>",440],
+  ["  <span class='ok'>✓</span> Luas atap       : <span class='v'>8.400 m² — orientasi Timur-Barat</span>",400],
+  ["  <span class='ok'>✓</span> Feeder cadangan : <span class='v'>2 slot tersedia di MDP</span>",380],
+  ["▸ Sintesis profil beban 24 jam …",500],
+  ["  <span class='ok'>✓</span> Estimasi atap terpakai : <span class='v'>6.000 m² → maks 750 kWp</span>",420],
+  ["  <span class='ok'>✓</span> <span class='v'>Digital Twin siap.</span> Membangun skenario investasi …",500]
+];
+document.getElementById('btnRead').onclick = async function(){
+  this.disabled=true; this.textContent="MEMBACA DOKUMEN…";
+  document.getElementById('c1').className="chip blue";
+  document.getElementById('c1').textContent="EKSTRAKSI…";
+  const log=document.getElementById('log'); log.classList.remove('hide'); log.innerHTML="";
+  for (const [t,ms] of LOGLINES){
+    await new Promise(r=>setTimeout(r,ms));
+    const d=document.createElement('div'); d.className="l"; d.innerHTML=t;
+    log.appendChild(d); log.scrollTop=log.scrollHeight;
+  }
+  await new Promise(r=>setTimeout(r,400));
+  document.getElementById('st1').className="step done";
+  document.getElementById('st2').className="step done";
+  document.getElementById('st3').className="step on";
+  document.getElementById('stage1').classList.add('hide');
+  document.getElementById('stage2').classList.remove('hide');
+  startTwin(); renderDecision(); narrate();
+};
+
+// ================= TWIN LOOP =================
+function startTwin(){
+  drawChart();
+  clearInterval(twinTimer);
+  twinTimer = setInterval(()=>{ hour=(hour+1)%24; drawChart(); }, 700);
+}
+
+// controls
+document.getElementById('tBase').onclick=()=>setMode('base');
+document.getElementById('tPv').onclick=()=>setMode('pv');
+document.getElementById('tBess').onclick=()=>setMode('bess');
+function setMode(m){
+  MODE=m;
+  document.getElementById('tBase').className = m==='base'?'on':'';
+  document.getElementById('tPv').className   = m==='pv'?'on pv':'pv';
+  document.getElementById('tBess').className = m==='bess'?'on':'';
+  drawChart();
+}
+function bind(id,key,vid,fmt,after){
+  const s=document.getElementById(id);
+  s.oninput=()=>{ CFG[key]=parseFloat(s.value);
+    document.getElementById(vid).textContent=fmt(CFG[key]);
+    if(after) after();
+    drawChart(); renderDecision(); schedule(); };
+}
+bind('sPv','pv','vPv',v=>v);
+bind('sBess','bess','vBess',v=>v.toLocaleString('id-ID'));
+bind('sRoof','roof','vRoof',v=>v.toLocaleString('id-ID'), ()=>{
+  // roof constrains PV
+  const maxKwp = Math.floor(CFG.roof/CFG.m2PerKwp/25)*25;
+  const s=document.getElementById('sPv');
+  s.max = Math.max(100,maxKwp);
+  if (CFG.pv > maxKwp){ CFG.pv=maxKwp; s.value=maxKwp; document.getElementById('vPv').textContent=maxKwp; }
+});
+document.getElementById('sBcost').oninput = function(){
+  CFG.bessCostPerKwh = parseFloat(this.value)*1e6;
+  document.getElementById('vBcost').textContent = parseFloat(this.value).toFixed(1).replace('.',',');
+  renderDecision(); schedule();
+};
+
+const qIn=document.getElementById('qIn');
+document.getElementById('qBtn').onclick=()=>{const q=qIn.value.trim(); if(q){ask(q);qIn.value="";}};
+qIn.onkeydown=e=>{if(e.key==='Enter'){const q=qIn.value.trim(); if(q){ask(q);qIn.value="";}}};
+[
+  "Di harga berapa baterai baru masuk akal?",
+  "Kenapa solar saja lebih untung dari solar + baterai?",
+  "Kalau atap sudah penuh solar, apa langkah berikutnya?",
+  "Bandingkan dengan deposito bank",
+  "Risiko terbesar investasi ini apa?"
+].forEach(q=>{
+  const b=document.createElement('button'); b.textContent=q; b.onclick=()=>ask(q);
+  document.getElementById('sug').appendChild(b);
+});
+</script>
+</body>
+</html>

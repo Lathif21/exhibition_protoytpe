@@ -1,0 +1,19 @@
+{
+  "name": "befisien-backend",
+  "version": "1.0.0",
+  "description": "BEFISIEN // EPP — Backend Bun + Elysia + Drizzle + SQLite",
+  "type": "module",
+  "main": "server.ts",
+  "scripts": {
+    "start": "bun run server.ts",
+    "dev": "bun run --watch server.ts"
+  },
+  "dependencies": {
+    "elysia": "^1.1.0",
+    "drizzle-orm": "^0.40.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "bun-types": "latest"
+  }
+}
