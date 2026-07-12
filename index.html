@@ -619,7 +619,7 @@ async function callOpenAI(messages, retry=1){
       headers:{"Content-Type":"application/json"},
       body: JSON.stringify({
         messages,
-        model: "gpt-4o-mini"
+        model: "gemini/gemini-2.5-flash"
       })
     });
     const d = await res.json();

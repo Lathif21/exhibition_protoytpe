@@ -22,7 +22,7 @@ export function aiRoutes(app: Elysia) {
   // POST /api/openai — OpenAI via SumoPod
   app.post('/api/openai', async ({ body }: { body: any }) => {
     try {
-      const { messages, model = 'gpt-4o-mini' } = body;
+      const { messages, model = 'gemini/gemini-2.5-flash' } = body;
 
       if (!messages || !Array.isArray(messages)) {
         return { error: 'Invalid request: messages array required' };

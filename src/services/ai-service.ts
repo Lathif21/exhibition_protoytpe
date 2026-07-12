@@ -47,7 +47,7 @@ export async function callClaude(messages: any[], model = 'claude-opus-4-8'): Pr
   }
 }
 
-export async function callOpenAI(messages: any[], model = 'gpt-4o-mini'): Promise<string | null> {
+export async function callOpenAI(messages: any[], model = 'gemini/gemini-2.5-flash'): Promise<string | null> {
   try {
     const response = await fetch('https://ai.sumopod.com/v1/chat/completions', {
       method: 'POST',
