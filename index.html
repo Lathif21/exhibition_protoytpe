@@ -580,20 +580,20 @@ function renderDecision(){
 }
 
 // ================= AI =================
-async function callClaude(messages, retry=1){
+async function callOpenAI(messages, retry=1){
   try{
-    const res = await fetch("http://localhost:3000/api/claude",{
+    const res = await fetch("http://localhost:3000/api/openai",{
       method:"POST",
       headers:{"Content-Type":"application/json"},
       body: JSON.stringify({
         messages,
-        model: "claude-opus-4-8"
+        model: "gpt-5-mini"
       })
     });
     const d = await res.json();
     return d.text || null;
   }catch(e){
-    if(retry>0) return callClaude(messages,retry-1);
+    if(retry>0) return callOpenAI(messages,retry-1);
     return null;
   }
 }
@@ -640,7 +640,7 @@ async function narrate(){
   const el=document.getElementById('aiTx');
   el.className="tx think"; el.textContent="▸ menganalisis konfigurasi…";
   const k=[CFG.pv,CFG.bess,CFG.roof].join('|'); aiKey=k;
-  const out = await callClaude([{role:"user",content: brief()+`
+  const out = await callOpenAI([{role:"user",content: brief()+`
 
 Anda analis investasi energi BEFISIEN. Bicara ke pemilik pabrik, 3-4 kalimat Bahasa Indonesia bisnis:
 (1) opsi mana yang menang dan KENAPA — kaitkan ke fakta konkret dokumennya (beban malam 380 kW, WBP 18-22 mahal, biaya beban kVA Rp 49,6 jt/bln);
@@ -659,7 +659,7 @@ function schedule(){ clearTimeout(aiTimer); aiTimer=setTimeout(narrate,700); }
 async function ask(q){
   const el=document.getElementById('aiTx');
   el.className="tx think"; el.textContent="▸ "+q+"\n\nmenghitung…";
-  const out = await callClaude([{role:"user",content: brief()+`
+  const out = await callOpenAI([{role:"user",content: brief()+`
 
 Pertanyaan pemilik pabrik: "${q}"
 
