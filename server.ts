@@ -25,9 +25,9 @@ app.get('/', async () => {
 app.get('/health', () => ({ status: 'ok' }));
 
 // AI endpoint — Claude via SumoPod
-app.post('/api/claude', async (req) => {
+app.post('/api/claude', async ({ body }: { body: any }) => {
   try {
-    const { messages, model = 'claude-opus-4-8' } = await req.json() as any;
+    const { messages, model = 'claude-opus-4-8' } = body;
 
     if (!messages || !Array.isArray(messages)) {
       return { error: 'Invalid request: messages array required' };
@@ -68,9 +68,9 @@ app.post('/api/claude', async (req) => {
 });
 
 // AI endpoint — OpenAI via SumoPod
-app.post('/api/openai', async (req) => {
+app.post('/api/openai', async ({ body }: { body: any }) => {
   try {
-    const { messages, model = 'gpt-4o-mini' } = await req.json() as any;
+    const { messages, model = 'gpt-4o-mini' } = body;
 
     if (!messages || !Array.isArray(messages)) {
       return { error: 'Invalid request: messages array required' };
