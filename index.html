@@ -232,6 +232,26 @@
 
         <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--lsoft)">
           <div style="font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--dim);margin-bottom:12px">▸ PARAMETER SISTEM</div>
+
+          <div class="ctrl">
+            <div class="ct"><span class="n">Golongan Tarif PLN</span></div>
+            <select id="sTariff" style="width:100%;padding:8px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;color:var(--ink);font-family:var(--mono);font-size:11px">
+              <option value="1122" data-name="I-3 / B-3 · &gt;200 kVA">I-3 Industri · Rp 1.122</option>
+              <option value="997" data-name="I-4 · ≥30.000 kVA">I-4 Industri Besar · Rp 997</option>
+              <option value="1445" data-name="B-2 · 6.6k–200 kVA">B-2 Bisnis · Rp 1.445</option>
+              <option value="1700" data-name="R-3 / P-1">R-3 / P-1 · Rp 1.700</option>
+            </select>
+          </div>
+
+          <div class="ctrl">
+            <div class="ct"><span class="n">Rasio Konsumsi Siang <em>vs kapasitas terpakai</em></span></div>
+            <select id="sSelf" style="width:100%;padding:8px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;color:var(--ink);font-family:var(--mono);font-size:11px">
+              <option value="1.0">100% terpakai (kejar beban)</option>
+              <option value="0.85" selected>85% terpakai</option>
+              <option value="0.7">70% terpakai</option>
+            </select>
+          </div>
+
           <div class="ctrl">
             <div class="ct"><span class="n">Kapasitas PLTS <em>dibatasi atap 8.400 m²</em></span><span class="v"><span id="vPv">750</span> kWp</span></div>
             <input type="range" id="sPv" min="100" max="1100" value="750" step="25">
@@ -325,6 +345,8 @@ const LOAD = [380,380,380,390,400,430,620,880,1050,1120,1150,1140,
 
 const CFG = {
   pv:750, bess:1500, roof:6000,
+  tariff:1122,               // Rp/kWh LWBP rate
+  selfConsumption:0.85,      // ratio konsumsi siang
   pvCostPerKwp:9.5e6,        // Rp/kWp installed
   bessCostPerKwh:3.8e6,      // Rp/kWh installed
   psh:4.0, degrad:0.005, omPct:0.01, life:25,
@@ -619,6 +641,7 @@ DATA DARI SINGLE LINE DIAGRAM:
 
 KONFIGURASI YANG SEDANG DISIMULASIKAN:
 - PLTS: ${CFG.pv} kWp | BESS: ${CFG.bess} kWh | atap terpakai: ${CFG.roof} m2
+- Tarif LWBP: Rp ${CFG.tariff}/kWh | Rasio konsumsi siang: ${(CFG.selfConsumption*100).toFixed(0)}%
 - Harga BESS saat ini: Rp ${(CFG.bessCostPerKwh/1e6).toFixed(1)} jt/kWh
 - TITIK IMPAS BESS: ${be ? "Rp "+(be/1e6).toFixed(1)+" jt/kWh" : "tidak layak di harga berapa pun"}
   (di bawah harga ini baterai mulai menguntungkan dibanding beli solar saja)
@@ -792,6 +815,18 @@ bind('sRoof','roof','vRoof',v=>v.toLocaleString('id-ID'), ()=>{
 document.getElementById('sBcost').oninput = function(){
   CFG.bessCostPerKwh = parseFloat(this.value)*1e6;
   document.getElementById('vBcost').textContent = parseFloat(this.value).toFixed(1).replace('.',',');
+  renderDecision(); schedule();
+};
+
+// Tariff dropdown
+document.getElementById('sTariff').onchange = function(){
+  CFG.tariff = parseFloat(this.value);
+  renderDecision(); schedule();
+};
+
+// Self-consumption ratio dropdown
+document.getElementById('sSelf').onchange = function(){
+  CFG.selfConsumption = parseFloat(this.value);
   renderDecision(); schedule();
 };
 
