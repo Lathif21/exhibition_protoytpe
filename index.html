@@ -587,7 +587,7 @@ async function callOpenAI(messages, retry=1){
       headers:{"Content-Type":"application/json"},
       body: JSON.stringify({
         messages,
-        model: "gpt-5-mini"
+        model: "gpt-4o-mini"
       })
     });
     const d = await res.json();

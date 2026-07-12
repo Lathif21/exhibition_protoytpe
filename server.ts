@@ -32,7 +32,7 @@ documentRoutes(app);
 app.listen(PORT, () => {
   console.log(`✓ Server berjalan di http://localhost:${PORT}`);
   console.log(`✓ Endpoints:`);
-  console.log(`   - AI: POST /api/claude (claude-opus-4-8), /api/openai (gpt-5-mini)`);
+  console.log(`   - AI: POST /api/claude (claude-opus-4-8), /api/openai (gpt-4o-mini)`);
   console.log(`   - Sessions: GET/POST /sessions`);
   console.log(`   - Documents: POST /api/documents (Fase 3)`);
   console.log(`✓ Database: ${process.env.DATABASE_URL || './local.db'}`);
