@@ -377,13 +377,14 @@ function simulate(kwp, bessKwh){
   const out = [];
   const cRate = bessKwh * 0.5;
   let targetPeak = 0;
-  for (let h=0; h<24; h++) targetPeak = Math.max(targetPeak, LOAD[h]-pvAt(h,kwp));
+  for (let h=0; h<24; h++) targetPeak = Math.max(targetPeak, LOAD[h]-pvAt(h,kwp)*CFG.selfConsumption);
 
   for (let h=0; h<24; h++){
     const load = LOAD[h];
     const pv = pvAt(h, kwp);
-    const fromPv = Math.min(pv, load);
-    const surplus = pv - fromPv;
+    const pvUsable = pv * CFG.selfConsumption;   // rasio konsumsi siang: fraksi PV yang efektif terpakai
+    const fromPv = Math.min(pvUsable, load);
+    const surplus = pvUsable - fromPv;
     let charge=0, gridCharge=0, discharge=0;
     const isWbp = h >= PLANT.wbpStart && h < PLANT.wbpEnd;
 
@@ -436,9 +437,13 @@ function economics(kwp, bessKwh){
     gridCharged += d.gridCharge;
   });
   const daysY = CFG.workDays * 12;
+  // tarif LWBP mengikuti dropdown Golongan Tarif PLN; WBP dihitung proporsional
+  // terhadap rasio dokumen asli (Rp 1.683 / Rp 1.122 ≈ 1,5x)
+  const lwbpRate = CFG.tariff;
+  const wbpRate = CFG.tariff * (PLANT.wbp / PLANT.lwbp);
   // gross avoided cost MINUS the cheap LWBP energy we bought to fill the battery
-  const gross = lwbpOffset*PLANT.lwbp + wbpOffset*PLANT.wbp;
-  const chargeCost = gridCharged * PLANT.lwbp;
+  const gross = lwbpOffset*lwbpRate + wbpOffset*wbpRate;
+  const chargeCost = gridCharged * lwbpRate;
   const saveEnergy = (gross - chargeCost) * daysY;
 
   // demand charge reduction: new peak kVA
@@ -528,9 +533,10 @@ function drawChart(){
   document.getElementById('clk').textContent = String(hour).padStart(2,'0')+":00";
   const ph = document.getElementById('phase');
   const isWbp = hour>=18 && hour<22;
-  if (isWbp){ ph.className="ph2 wbp"; ph.textContent="WBP · TARIF Rp 1.683"; }
+  const wbpRateNow = Math.round(CFG.tariff * (PLANT.wbp / PLANT.lwbp));
+  if (isWbp){ ph.className="ph2 wbp"; ph.textContent="WBP · TARIF Rp "+wbpRateNow.toLocaleString('id-ID'); }
   else if (d.pv>0){ ph.className="ph2 solar"; ph.textContent="SURYA AKTIF · LWBP"; }
-  else { ph.className="ph2"; ph.textContent = hour<6||hour>=22 ? "BEBAN DASAR · SHIFT-3" : "LWBP · Rp 1.122"; }
+  else { ph.className="ph2"; ph.textContent = hour<6||hour>=22 ? "BEBAN DASAR · SHIFT-3" : "LWBP · Rp "+CFG.tariff.toLocaleString('id-ID'); }
 
   document.getElementById('fLoad').textContent = Math.round(d.load)+" kW";
   document.getElementById('fPln').textContent  = Math.round(d.grid)+" kW";
@@ -648,8 +654,8 @@ KONFIGURASI YANG SEDANG DISIMULASIKAN:
 
 STRATEGI BATERAI YANG DIMODELKAN: isi dari surplus surya + grid LWBP murah pada
 dini hari (00-05, pabrik hanya 380 kW), lalu lepas saat WBP 18-22 untuk menghindari
-tarif Rp 1.683. Pengisian dibatasi agar tidak menciptakan puncak kVA baru.
-Spread arbitrase: Rp 561/kWh (1.683 - 1.122), dikurangi rugi efisiensi 10%.
+tarif Rp ${Math.round(CFG.tariff*(PLANT.wbp/PLANT.lwbp)).toLocaleString('id-ID')}. Pengisian dibatasi agar tidak menciptakan puncak kVA baru.
+Spread arbitrase: Rp ${Math.round(CFG.tariff*(PLANT.wbp/PLANT.lwbp)-CFG.tariff).toLocaleString('id-ID')}/kWh, dikurangi rugi efisiensi 10%.
 
 HASIL EKONOMI:
 OPSI A — PLTS SAJA:
