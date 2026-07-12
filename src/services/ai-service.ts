@@ -57,7 +57,11 @@ export async function callOpenAI(messages: any[], model = 'gemini/gemini-2.5-fla
       },
       body: JSON.stringify({
         model,
-        max_tokens: 1000,
+        max_tokens: 2000,
+        // Gemini 2.5 Flash spends tokens on internal reasoning before writing
+        // the visible answer; without capping effort, reasoning alone can eat
+        // the whole max_tokens budget and truncate the reply mid-sentence.
+        reasoning_effort: 'low',
         messages,
       }),
     });
@@ -70,7 +74,12 @@ export async function callOpenAI(messages: any[], model = 'gemini/gemini-2.5-fla
       return null;
     }
 
-    const text = data.choices?.[0]?.message?.content || '';
+    const choice = data.choices?.[0];
+    const text = choice?.message?.content || '';
+
+    if (choice?.finish_reason === 'length' && text) {
+      console.warn('[OpenAI] Response truncated (finish_reason=length)');
+    }
 
     if (!text) {
       console.warn('[OpenAI] Empty response from API');
